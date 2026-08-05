@@ -1,0 +1,115 @@
+# ==========================================
+# UNOT Multi-GPU Configuration
+# ==========================================
+# This configuration file controls the neural operator architecture,
+# training logic, optimizer scheduling, and the physics-informed loss constraints.
+
+# ==========================================
+# 1. HARDWARE SETTINGS
+# ==========================================
+num_nodes: 1              # Number of separate physical nodes (servers) to use via SLURM
+n_gpu_per_node: 4
+multi_gpu: True           # Set to True to enable PyTorch Lightning DDP multi-GPU training
+use_gpu: True             # Set to True to train on GPU, False for CPU
+cpu_per_task: 9           # Number of CPU cores to assign per dataloader worker
+dropout_rate: 0.1         # Spatial Dropout and FC Dropout rate for regularization
+
+# ==========================================
+# 2. DATA GEOMETRY & TIME SCALES
+# ==========================================
+dx: 0.9                   # Spatial resolution/grid spacing in the X direction (fm)
+dy: 0.9                   # Spatial resolution/grid spacing in the Z direction (fm)
+dt: 9.0                   # Time step spacing between macroscopic frames in the dataset (fm/c)
+input_shape: [56, 56, 6]  # The dimensions of a single data frame: [X, Z, Channels]
+
+# ==========================================
+# 3. TRAINING LOGIC & BATCH SIZING
+# ==========================================
+num_epochs: 1000          # Total number of full passes over the training dataset
+batch_size: 512           # Number of trajectories processed per gradient update
+pin_memory: True
+seed: 38449               # Random seed for reproducibility
+trajectories_seed: 42     # Seed used specifically for trajectory shuffling
+pred_step: 3              # How many steps to predict in sequence
+iteration: 4
+curriculum_epochs: 0      # Unused curriculum parameter
+
+# ------------------------------------------
+# CRITICAL: PREDICTION TARGET MODE
+# ------------------------------------------
+predict_residual: True   
+# If False: The network predicts the ABSOLUTE physical state (X_t) from scratch.
+#           This requires turning epsilon to 0.0, as learning X_t from scratch across 
+#           large dt jumps violates instantaneous derivatives. (Used in successful old model)
+# If True:  The network predicts the DIFFERENCE (ΔX) and adds it to X_0. 
+
+# ==========================================
+# 4. OPTIMIZER & LEARNING RATE SCHEDULER
+# ==========================================
+base_lr: 1.0e-4           # Initial starting learning rate for the Adam optimizer
+min_lr: 1.0e-5            # Final minimum learning rate that the logistic scheduler drops to
+weight_decay: 1.0e-4      # L2 regularization penalty applied to model weights to prevent overfitting
+scheduler_step: 50        # Step decay interval (unused currently, uses LogisticLRScheduler)
+scheduler_gamma: 0.5      # Step decay multiplier (unused currently, uses LogisticLRScheduler)
+
+# ==========================================
+# 5. MODEL ARCHITECTURE
+# ==========================================
+width: 20                 # Base channel width of the UNO network. Determines capacity.
+uno_layers: 4             # Number of contraction/expansion layers in the UNO
+
+# ==========================================
+# 6. PHYSICS-INFORMED CONSTRAINTS (P.I.N.N)
+# ==========================================
+use_constraint: True      # Set to True to activate the HybridPhysicsLoss module
+
+alpha: 0.001
+# Mass Conservation Penalty.
+# Forces the total sum of protons/neutrons in the predicted frame to match the target frame.
+
+beta: 1.0                 
+# ML Objective Multiplier.
+# Scales the standard Data-Driven Relative L2 loss. Leave this at 1.0.
+
+gamma: 0.00001            
+# Center of Mass (CoM) Consistency Penalty.
+# Forces the predicted movement of the nucleus's center to match the mathematical momentum (J/M).
+
+epsilon: 0.0            
+wasserstein_weight: 0.1            
+# Marginal Wasserstein Distance Penalty.
+# Penalizes shifts in the predicted 1D CDF mass vs true mass.
+# Continuity Equation Penalty (∇·J = -dρ/dt).
+# SET TO 0.0 IF predict_residual=False AND dt=9.0! 
+# A massive dt of 9.0 violates instantaneous derivatives. Keeping this at 0.0 replicates your old model's success.
+
+nabla_c: 0.1603935        
+# Current Scalar Constant (J_SCALAR).
+# Precisely scales the exported TDHF Current tensor back to its correct physical magnitude.
+lp_p: 2                   # P-norm to use for relative loss calculations (2 = L2 Norm / MSE)
+
+# ==========================================
+# 7. DATA SPLITS & MANAGEMENT
+# ==========================================
+val_ratio: 0.1           # Percentage of dataset files to use for validation (1%)
+test_ratio: 0.0           # Percentage of dataset files to use for testing
+n_select: null            # Maximum number of files to select (null = use all files)
+test_num: 0               # Fixed number of test samples (overrides test_ratio if > 0)
+data_dir: "/lustre/fswork/projects/rech/lbf/umn29tg/ROOT/DATA/TDHF90_NORMALIZED"
+stats_path: "/lustre/fswork/projects/rech/lbf/umn29tg/ROOT/DATA/TDHF90_NORMALIZED/global_normalization_stats.pt"
+# Path to the global normalization constants for the dataset
+
+# ==========================================
+# 8. LOGGING & CHECKPOINTS
+# ==========================================
+project_tag: "UNO_Agress_a100dev_PhysicsLoss_"  
+# Name of the experiment. Used as a prefix for saved checkpoint files.
+
+save_model: True          # Set to True to save .ckpt files during training
+save_frequency: 10        # Number of epochs between each periodic checkpoint save
+checkpoint_dir: "./checkpoints" 
+# Output directory where PyTorch Lightning saves tensorboard logs and checkpoints
+
+load_model: True
+# Set to True to auto-resume from the last available checkpoint in checkpoint_dir.
+resume_path: "/lustre/fsn1/projects/rech/lbf/umn29tg/TRAIN/UNO_MGPU_DL_Lightening/OutPuts/UNO_Agress_a100dev_Lightning__Epoc400_LR1.0em3_Step3_Iter4_Nnull_Bz512_W20_GPU2_CPU9_0_RESIDUAL/checkpoints/last.ckpt"

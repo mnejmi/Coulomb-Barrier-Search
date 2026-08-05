@@ -1,0 +1,40 @@
+model_name: "UNO_Transformer_v7_ultimate_dev"
+data_dir: "/lustre/fswork/projects/rech/lbf/umn29tg/ROOT/DATA/TDHF90_NORMALIZED/"
+checkpoint_dir: "/lustre/fsn1/projects/rech/lbf/umn29tg/TRAIN/CheckPoints/"
+log_dir: "/lustre/fsn1/projects/rech/lbf/umn29tg/TRAIN/Logs/"
+
+batch_size: 512
+num_workers: 4
+gpus: 2
+precision: 32
+
+# Optimizer
+learning_rate: 0.0001
+weight_decay: 0.01
+lr_T_0: 100
+warmup_epochs: 0
+eta_min: 1.0e-5
+
+# Training Control
+epochs: 300
+iteration: 6
+patience: 1000
+load_model: False
+
+# Model Architecture
+width: 64
+
+# Physics Loss Coefficients
+pred_step: 1
+alpha: 1.0
+beta: 1.0
+gamma: 0.1
+delta: 0.05
+omega: 0.05
+
+# Dataset
+train_ratio: 0.99
+val_ratio: 0.01
+trajectories_seed: 42
+train_dim: 1383
+limit_data: 1000

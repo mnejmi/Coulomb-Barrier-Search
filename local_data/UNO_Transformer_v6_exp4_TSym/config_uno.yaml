@@ -1,0 +1,35 @@
+model_name: "UNO_Transformer_v6_exp4_TSym"
+data_dir: "local_data/"
+checkpoint_dir: "local_data/UNO_Transformer_v6_exp4_TSym/"
+log_dir: "local_data/UNO_Transformer_v6_exp4_TSym/"
+
+batch_size: 1
+num_workers: 4
+gpus: 1
+precision: 32
+
+# Optimizer
+learning_rate: 0.0002
+weight_decay: 0.0001
+lr_T_0: 500
+
+# Training Control
+epochs: 500
+patience: 1000
+load_model: True
+
+# Architecture
+width: 30
+dropout_rate: 0.05
+predict_residual: False
+
+# Physics
+pred_step: 1
+alpha: 1.0
+beta: 1.0
+
+# Dataset
+train_ratio: 0.95
+val_ratio: 0.05
+trajectories_seed: 42
+train_dim: 1383

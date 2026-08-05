@@ -1,0 +1,67 @@
+# ==========================================
+# TDHF Training Configuration
+# ==========================================
+
+# ------------------
+# Data
+# ------------------
+data:
+  data_dir: "/lustre/fsn1/projects/rech/lbf/umn29tg/TDHF_rot90"
+  traj_num: 5000
+  test_num: 0
+  pred_step: 3
+  iteration: 1
+
+# ------------------
+# Training
+# ------------------
+training:
+  num_epochs: 200
+  batch_size: 32
+  weight_decay: 5.0e-4
+  learning_rate: 5.0e-4
+  seed: 332449
+  seed_number: 59440
+
+# ------------------
+# Model
+# ------------------
+model:
+  width: 8
+  tag: "DO0_ratio10_wd8"
+
+# ------------------
+# Scheduler
+# ------------------
+scheduler:
+  gamma: 0.2
+  step_size: 4
+  initial_lr: 1.0e-3
+  final_lr: 1.0e-5
+
+# ------------------
+# System / Hardware
+# ------------------
+system:
+  use_gpu: true
+  multi_gpu: false
+  num_nodes: 1
+
+# ------------------
+# Saving / Checkpoints
+# ------------------
+checkpoint:
+  save_model: true
+  save_partial_model: true
+  partial_name: "partial_save"
+  load_model: false
+  evolve_test: false
+  make_movie: false
+
+# ------------------
+# Data Split
+# ------------------
+split:
+  train_ratio: 0.7
+  val_ratio: 0.15
+  test_ratio: 0.15
